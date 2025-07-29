@@ -20,10 +20,14 @@ public class DragonEggRacePlugin extends JavaPlugin {
     private int gameTicks = 0;
     private final int GAME_DURATION = 24000 * 100; // 100일 (틱 단위)
     private BukkitTask gameTask;
+    private DragonEggTracker eggTracker; // DragonEggTracker 필드
 
     @Override
     public void onEnable() {
         getLogger().info("드래곤 알 경주 플러그인이 활성화되었습니다!");
+
+        // DragonEggTracker 초기화
+        eggTracker = new DragonEggTracker(this);
 
         // 명령어 등록
         this.getCommand("dragongame").setExecutor(new GameCommand(this));
@@ -40,6 +44,10 @@ public class DragonEggRacePlugin extends JavaPlugin {
         if (gameTask != null) {
             gameTask.cancel();
         }
+        // 플러그인 비활성화 시 트래커 정리
+        if (eggTracker != null) {
+            eggTracker.cleanup();
+        }
         getLogger().info("드래곤 알 경주 플러그인이 비활성화되었습니다!");
     }
 
@@ -50,6 +58,9 @@ public class DragonEggRacePlugin extends JavaPlugin {
 
         gameActive = true;
         gameTicks = 0;
+
+        // 트래킹 시작
+        eggTracker.startTracking();
 
         // 모든 플레이어에게 게임 시작 알림
         broadcastMessage(ChatColor.GOLD + "=== 🐉 드래곤 알 경주 시작! 🐉 ===");
@@ -100,17 +111,21 @@ public class DragonEggRacePlugin extends JavaPlugin {
         if (gameTask != null) {
             gameTask.cancel();
         }
+        // 트래킹 중지 및 정리
+        eggTracker.stopTracking();
 
         broadcastMessage(ChatColor.RED + "게임이 강제로 중단되었습니다!");
     }
 
     private void endGame() {
         gameActive = false;
+        // 게임 종료 시 트래킹 중지 및 정리
+        eggTracker.stopTracking();
 
-        // 드래곤 알을 가진 플레이어 찾기
+        // 드래곤 알을 가진 플레이어 찾기 (DragonEggTracker의 메서드 사용)
         Player winner = null;
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (hasPlayerDragonEgg(player)) {
+            if (eggTracker.hasDragonEgg(player)) { // DragonEggTracker의 메서드 사용
                 winner = player;
                 break;
             }
@@ -155,16 +170,6 @@ public class DragonEggRacePlugin extends JavaPlugin {
             broadcastMessage(ChatColor.RED + "================================");
             broadcastMessage("");
         }
-    }
-
-    private boolean hasPlayerDragonEgg(Player player) {
-        // 인벤토리에서 드래곤 알 검색
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.DRAGON_EGG) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void spawnDragonAtPlayer(Player player) {
@@ -239,5 +244,10 @@ public class DragonEggRacePlugin extends JavaPlugin {
         int hours = (getRemainingTicks() % 24000) / 1000;
 
         return ChatColor.YELLOW + "게임 진행 중 - 남은 시간: " + days + "일 " + hours + "시간";
+    }
+
+    // DragonEggTracker 인스턴스에 접근하기 위한 getter 추가
+    public DragonEggTracker getEggTracker() {
+        return eggTracker;
     }
 }
