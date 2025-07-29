@@ -1,0 +1,17 @@
+name: dragon100
+version: '1.0-beta'
+main: com.jeonensu.dragoneggrace.DragonEggRacePlugin
+api-version: '1.21'
+author: YourName
+description: 100일 후 드래곤 알을 가진 플레이어가 승리하는 게임
+
+commands:
+  dragongame:
+    description: 드래곤 게임 관리 명령어
+    usage: /dragongame <start|stop|status>
+    permission: dragongame.admin
+
+permissions:
+  dragongame.admin:
+    description: 드래곤 게임 관리 권한
+    default: op
